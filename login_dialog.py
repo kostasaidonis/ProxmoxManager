@@ -1,9 +1,10 @@
 from PySide6.QtWidgets import (
-    QDialog, QFormLayout, QLabel, QLineEdit, QPushButton,
+    QDialog, QFormLayout, QLabel, QLineEdit, QPushButton, QCheckBox,
 )
 from PySide6.QtCore import Signal
 
 from proxmox_api import ProxmoxAPIClient
+from config import AppConfig
 
 
 class LoginDialog(QDialog):
@@ -14,6 +15,8 @@ class LoginDialog(QDialog):
         self.setWindowTitle("Proxmox Authentication")
         self.setModal(True)
         self.setMinimumWidth(360)
+
+        self.config = AppConfig()
 
         layout = QFormLayout(self)
         layout.setContentsMargins(16, 16, 16, 16)
@@ -35,6 +38,10 @@ class LoginDialog(QDialog):
         layout.addRow("Username:", self.user_input)
         layout.addRow("Password:", self.pw_input)
 
+        self.remember_check = QCheckBox("Remember credentials")
+        self.remember_check.setChecked(True)
+        layout.addRow(self.remember_check)
+
         self.btn = QPushButton("Authenticate")
         self.btn.setDefault(True)
         self.btn.clicked.connect(self._on_auth)
@@ -46,6 +53,17 @@ class LoginDialog(QDialog):
         layout.addRow(self.error_label)
 
         self._client = None
+
+        # Pre-fill from config
+        host, user, pw = self.config.load()
+        if host:
+            self.host_input.setText(host)
+        if user:
+            self.user_input.setText(user)
+        if pw:
+            self.pw_input.setText(pw)
+        if host and user and pw:
+            self.host_input.setFocus()
 
     def _on_auth(self):
         host = self.host_input.text().strip()
@@ -61,6 +79,13 @@ class LoginDialog(QDialog):
             self.error_label.setText(f"Authentication failed: {e}")
             return
         self._client = client
+
+        if self.remember_check.isChecked():
+            try:
+                self.config.save(host, user, pw)
+            except Exception:
+                pass
+
         self.authenticated.emit(client)
         self.accept()
 
