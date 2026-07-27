@@ -20,7 +20,7 @@ class LoginDialog(QDialog):
         layout.setSpacing(8)
 
         heading = QLabel("Enter Proxmox Credentials")
-        heading.setStyleSheet("font-size: 14px; font-weight: bold;")
+        heading.setStyleSheet("font-size: 15px; font-weight: 600; color: #e8e8e8; padding-bottom: 4px;")
         layout.addRow(heading)
 
         self.host_input = QLineEdit()

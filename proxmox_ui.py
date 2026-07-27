@@ -2,10 +2,11 @@ import threading
 import time
 
 from PySide6.QtCore import Qt, QObject, Signal, Slot
+from PySide6.QtGui import QColor, QFont
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
     QTableWidget, QTableWidgetItem, QLabel, QStatusBar, QHeaderView,
-    QMessageBox,
+    QMessageBox, QFrame,
 )
 
 
@@ -19,7 +20,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.api = api_client
         self.setWindowTitle("Proxmox VM Manager")
-        self.resize(1000, 600)
+        self.resize(1100, 650)
 
         self.selected_vmid = None
         self.selected_node = None
@@ -27,25 +28,47 @@ class MainWindow(QMainWindow):
         self._vnc_window = None
 
         central = QWidget()
+        self.setObjectName("central")
         self.setCentralWidget(central)
         layout = QVBoxLayout(central)
-        layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(10)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(12)
 
+        # ---- Title bar ----
         title = QLabel("Proxmox VM Manager")
-        title.setStyleSheet("font-size: 18px; font-weight: bold; padding: 2px;")
+        title.setStyleSheet("font-size: 20px; font-weight: 600; color: #e8e8e8;")
         layout.addWidget(title)
 
+        # ---- Toolbar ----
         toolbar = QHBoxLayout()
-        self.btn_start = QPushButton("Start VM")
-        self.btn_stop = QPushButton("Stop VM")
-        self.btn_vnc = QPushButton("Launch VNC")
-        self.btn_refresh = QPushButton("Refresh")
+        toolbar.setSpacing(8)
+
+        self.btn_start = QPushButton("▶  Start")
+        self.btn_stop = QPushButton("■  Stop")
+        self.btn_vnc = QPushButton("🖥  Launch VNC")
+        self.btn_refresh = QPushButton("↻  Refresh")
+
+        btn_style = """
+            QPushButton {
+                padding: 8px 16px;
+                border-radius: 6px;
+                background-color: #3a3a3a;
+                color: #e8e8e8;
+                font-size: 13px;
+                font-weight: 500;
+                border: 1px solid #555;
+            }
+            QPushButton:hover { background-color: #4a4a4a; border-color: #666; }
+            QPushButton:pressed { background-color: #2a2a2a; }
+            QPushButton:disabled { color: #666; background-color: #2a2a2a; }
+        """
         for b in (self.btn_start, self.btn_stop, self.btn_vnc, self.btn_refresh):
+            b.setStyleSheet(btn_style)
             toolbar.addWidget(b)
         toolbar.addStretch()
         layout.addLayout(toolbar)
 
+        # ---- Table ----
         self.table = QTableWidget(0, 7)
         self.table.setHorizontalHeaderLabels(
             ["VMID", "Name", "Status", "Node", "CPU (%)", "Memory (%)", "Uptime"]
@@ -56,9 +79,44 @@ class MainWindow(QMainWindow):
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.verticalHeader().setVisible(False)
         self.table.setAlternatingRowColors(True)
+        self.table.setShowGrid(False)
+        self.table.setStyleSheet("""
+            QTableWidget {
+                background-color: #1e1e1e;
+                alternate-background-color: #252525;
+                color: #e8e8e8;
+                border: 1px solid #383838;
+                border-radius: 4px;
+                gridline-color: #333;
+            }
+            QHeaderView::section {
+                background-color: #2d2d2d;
+                color: #aaa;
+                padding: 6px;
+                border: none;
+                border-bottom: 1px solid #383838;
+                font-weight: 600;
+                font-size: 12px;
+            }
+            QTableWidget::item {
+                padding: 4px 8px;
+                border-bottom: 1px solid #2a2a2a;
+            }
+            QTableWidget::item:selected {
+                background-color: #0078d4;
+                color: #ffffff;
+            }
+        """)
         layout.addWidget(self.table)
 
         self.setStatusBar(QStatusBar())
+        self.statusBar().setStyleSheet("""
+            QStatusBar {
+                background-color: #1a1a1a;
+                color: #999;
+                border-top: 1px solid #333;
+            }
+        """)
         self.statusBar().showMessage("Ready")
 
         self.btn_start.clicked.connect(self.start_vm)
@@ -90,7 +148,12 @@ class MainWindow(QMainWindow):
 
     @Slot(list)
     def populate_table(self, vms):
+        # Remember which VMID was selected so we can restore it after refresh
+        saved_vmid = self.selected_vmid
+
         self.table.setRowCount(0)
+        restore_row = -1
+
         for vm in vms:
             row = self.table.rowCount()
             self.table.insertRow(row)
@@ -109,7 +172,31 @@ class MainWindow(QMainWindow):
             for c, v in enumerate(vals):
                 item = QTableWidgetItem(v)
                 item.setData(Qt.UserRole, vm.get("vmid"))
+
+                # Color-code the status column
+                if c == 2:
+                    status = v.lower()
+                    if status == "running":
+                        item.setForeground(QColor("#4caf50"))
+                        f = QFont()
+                        f.setBold(True)
+                        item.setFont(f)
+                    elif status == "stopped":
+                        item.setForeground(QColor("#f44336"))
+                    elif status == "paused":
+                        item.setForeground(QColor("#ff9800"))
+
                 self.table.setItem(row, c, item)
+
+            if str(vm.get("vmid")) == saved_vmid:
+                restore_row = row
+
+        # Restore selection if the same VMID is still present
+        if restore_row >= 0:
+            self.table.selectRow(restore_row)
+        else:
+            self.selected_vmid = None
+            self.selected_node = None
 
     @staticmethod
     def _format_uptime(seconds):
