@@ -4,11 +4,19 @@ import sys
 # Must be set before QApplication / WebEngine is initialised
 os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--ignore-certificate-errors"
 
-from PySide6.QtGui import QPalette, QColor
+from PySide6.QtGui import QPalette, QColor, QIcon
 from PySide6.QtWidgets import QApplication
 
 from login_dialog import LoginDialog
 from proxmox_ui import MainWindow
+
+def resource_path(relative):
+    """Resolve path to resource, works for dev and PyInstaller frozen exe."""
+    if getattr(sys, "frozen", False):
+        base = sys._MEIPASS
+    else:
+        base = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base, relative)
 
 
 DARK_QSS = """
@@ -50,6 +58,7 @@ QMessageBox QLabel { color: #e8e8e8; }
 def main():
     app = QApplication(sys.argv)
     app.setApplicationName("Proxmox VM Manager")
+    app.setWindowIcon(QIcon(resource_path("app.ico")))
 
     # Dark Fusion palette
     pal = app.palette()
