@@ -5,35 +5,69 @@ def make_icon(size):
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
 
-    # Rounded rectangle background — dark blue
+    # Rounded rectangle background — dark charcoal
     margin = size // 10
     radius = size // 6
     d.rounded_rectangle(
         [margin, margin, size - margin, size - margin],
         radius=radius,
-        fill=(13, 71, 161, 255),  # Material Blue 800
+        fill=(26, 26, 26, 255),
     )
 
-    # Server rack bars (white, representing VMs)
-    bar_w = size // 3
-    bar_h = size // 14
-    gap = size // 28
-    start_y = size // 3
+    # Magnifying glass circle (cyan accent)
+    cx = size // 2
+    cy = int(size * 0.42)
+    r = int(size * 0.22)
+    ring = max(2, size // 32)
+    d.ellipse(
+        [cx - r, cy - r, cx + r, cy + r],
+        outline=(0, 120, 212, 255),
+        width=ring,
+    )
+
+    # Server rack bars inside the lens
+    bar_w = int(r * 1.1)
+    bar_h = max(2, size // 20)
+    gap = max(1, size // 40)
+    start_y = cy - bar_h - gap // 2
     for i in range(3):
         y = start_y + i * (bar_h + gap)
-        x0 = (size - bar_w) // 2
+        x0 = cx - bar_w // 2
         d.rounded_rectangle(
             [x0, y, x0 + bar_w, y + bar_h],
-            radius=bar_h // 3,
-            fill=(255, 255, 255, 230),
+            radius=max(1, bar_h // 3),
+            fill=(232, 232, 232, 220),
         )
 
-    # Green status dot (top-right)
-    dot_r = size // 10
-    cx, cy = size - margin - dot_r, margin + dot_r
+    # Magnifying glass handle (bottom-right diagonal)
+    hl = int(size * 0.18)
+    hw = max(2, size // 24)
+    hx0 = cx + int(r * 0.7)
+    hy0 = cy + int(r * 0.7)
+    hx1 = hx0 + hl
+    hy1 = hy0 + hl
+    d.line(
+        [hx0, hy0, hx1, hy1],
+        fill=(0, 120, 212, 255),
+        width=hw,
+    )
+    # Round the handle endpoints
     d.ellipse(
-        [cx - dot_r, cy - dot_r, cx + dot_r, cy + dot_r],
-        fill=(76, 175, 80, 255),  # Material Green 500
+        [hx0 - hw // 2, hy0 - hw // 2, hx0 + hw // 2, hy0 + hw // 2],
+        fill=(0, 120, 212, 255),
+    )
+    d.ellipse(
+        [hx1 - hw // 2, hy1 - hw // 2, hx1 + hw // 2, hy1 + hw // 2],
+        fill=(0, 120, 212, 255),
+    )
+
+    # Green status dot (top-right corner)
+    dot_r = size // 12
+    dx = size - margin - dot_r - 2
+    dy = margin + dot_r + 2
+    d.ellipse(
+        [dx - dot_r, dy - dot_r, dx + dot_r, dy + dot_r],
+        fill=(76, 175, 80, 255),
     )
 
     return img

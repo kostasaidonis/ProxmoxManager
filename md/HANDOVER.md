@@ -57,7 +57,7 @@ Output: `dist/ProxmoxManager.exe` (windowed, no console).
 
 | ID | Title | Description | Status |
 |----|-------|-------------|--------|
-| 01-1 | Update PyInstaller spec | `ProxmoxManager.spec` may need hidden imports for `netifaces` and `zeroconf` when building the exe. | OPEN |
+| 01-1 | Update PyInstaller spec | `ProxmoxManager.spec` may need hidden imports for `netifaces` and `zeroconf` when building the exe. | DONE |
 
 ---
 
@@ -93,6 +93,24 @@ Output: `dist/ProxmoxManager.exe` (windowed, no console).
 - `discover_dialog.py` — combo `setEditable(True)` always, placeholder text, `start_scan` parses typed CIDR, added `_on_table_selection` handler connected to `itemSelectionChanged`.
 
 **Verification:** `py_compile` — OK.
+
+**Status:** ✅ DONE — 2026-07-28
+
+### Session 2026-07-28 — New icon + exe rebuild
+
+**Branch:** `main`
+
+**Summary:** Redesigned the application icon to a magnifying-glass-over-server-bars design (dark charcoal background, cyan accent, green status dot) representing the new server discovery feature. Updated `generate_icon.py`, regenerated `app.ico`, added `netifaces`/`zeroconf`/`ifaddr` to the PyInstaller spec hidden imports, and rebuilt the exe successfully.
+
+**Files Modified:**
+- `generate_icon.py` — redesigned icon: dark charcoal bg, cyan magnifying glass, server rack bars inside lens, green status dot.
+- `app.ico` — regenerated with new design.
+- `ProxmoxManager.spec` — added `netifaces`, `zeroconf`, `ifaddr` to `hiddenimports`.
+
+**Verification:**
+- `python generate_icon.py` — app.ico created.
+- `pyinstaller ProxmoxManager.spec --noconfirm` — Build complete (221 MB exe).
+- `dist/ProxmoxManager.exe` — 221,174,348 bytes, dated 2026-07-28 09:19.
 
 **Status:** ✅ DONE — 2026-07-28
 
