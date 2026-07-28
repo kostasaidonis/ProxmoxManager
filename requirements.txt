@@ -1,3 +1,5 @@
 requests
 urllib3
 PySide6
+netifaces
+zeroconf

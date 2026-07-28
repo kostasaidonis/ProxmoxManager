@@ -1,10 +1,12 @@
 from PySide6.QtWidgets import (
     QDialog, QFormLayout, QLabel, QLineEdit, QPushButton, QCheckBox,
+    QHBoxLayout, QWidget,
 )
 from PySide6.QtCore import Signal
 
 from proxmox_api import ProxmoxAPIClient
 from config import AppConfig
+from discover_dialog import DiscoverDialog
 
 
 class LoginDialog(QDialog):
@@ -28,13 +30,23 @@ class LoginDialog(QDialog):
 
         self.host_input = QLineEdit()
         self.host_input.setPlaceholderText("192.168.1.10")
+        self.btn_discover = QPushButton("🔍 Discover")
+        self.btn_discover.clicked.connect(self._open_discover)
+
+        host_row = QHBoxLayout()
+        host_row.setContentsMargins(0, 0, 0, 0)
+        host_row.addWidget(self.host_input, 1)
+        host_row.addWidget(self.btn_discover)
+        host_widget = QWidget()
+        host_widget.setLayout(host_row)
+
         self.user_input = QLineEdit()
         self.user_input.setPlaceholderText("root")
         self.pw_input = QLineEdit()
         self.pw_input.setPlaceholderText("Password")
         self.pw_input.setEchoMode(QLineEdit.Password)
 
-        layout.addRow("Host:", self.host_input)
+        layout.addRow("Host:", host_widget)
         layout.addRow("Username:", self.user_input)
         layout.addRow("Password:", self.pw_input)
 
@@ -88,6 +100,12 @@ class LoginDialog(QDialog):
 
         self.authenticated.emit(client)
         self.accept()
+
+    def _open_discover(self):
+        dlg = DiscoverDialog(self)
+        if dlg.exec() == QDialog.Accepted and dlg.selected_ip():
+            self.host_input.setText(dlg.selected_ip())
+            self.user_input.setFocus()
 
     def client(self):
         return self._client
