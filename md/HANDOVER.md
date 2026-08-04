@@ -1,6 +1,6 @@
 # ProxmoxManager — Handover Document
 
-> **Last updated:** 2026-07-28
+> **Last updated:** 2026-08-04
 > **Repository:** `C:\Users\KOSTASLAB\Documents\Pycharm2024Projects\ProxmoxManager`
 > **Branch:** `main` · **Head:** `bec64cf refactor`
 
@@ -58,6 +58,7 @@ Output: `dist/ProxmoxManager.exe` (windowed, no console).
 | ID | Title | Description | Status |
 |----|-------|-------------|--------|
 | 01-1 | Update PyInstaller spec | `ProxmoxManager.spec` may need hidden imports for `netifaces` and `zeroconf` when building the exe. | DONE |
+| 02-1 | Quick Connect app | Secondary manager app (Greek, fancy UI, settings + one Connect button to launch VNC of preselected VM). | DONE |
 
 ---
 
@@ -67,6 +68,7 @@ Output: `dist/ProxmoxManager.exe` (windowed, no console).
 |------|----------|------|------|
 | 2026-07-28 | qwen | INFO | HANDOVER.md created. Legacy Kivy UI lives in `Proxmoxmanager.py`; active app is PySide6 via `main.py`. |
 | 2026-07-28 | qwen | DECISION | Server discovery uses `netifaces` for subnet enumeration and `zeroconf` for mDNS auto-discovery. Added to `requirements.txt`. |
+| 2026-08-04 | qwen | INFO | Added "Proxmox Quick Connect" secondary app: small Greek-only window (Ρυθμίσεις / Σύνδεση) that stores host+user+pw+node+vmid and launches noVNC in one click. Distinct icon (`quick.ico`, lightning-bolt-in-monitor). Separate exe `ProxmoxQuickConnect.exe`. |
 
 ---
 
@@ -113,6 +115,28 @@ Output: `dist/ProxmoxManager.exe` (windowed, no console).
 - `dist/ProxmoxManager.exe` — 221,174,348 bytes, dated 2026-07-28 09:19.
 
 **Status:** ✅ DONE — 2026-07-28
+
+### Session 2026-08-04 — Proxmox Quick Connect (secondary app)
+
+**Branch:** `main`
+
+**Summary:** Created a standalone secondary manager — "Proxmox Quick Connect" — a small fixed-size (320×220) Greek-language window with a fancy deep-teal gradient background (`#0f2027`→`#203a43`→`#2c5364`) and cyan accent (`#00d2ff`). Only two buttons: «Ρυθμίσεις» (opens a settings dialog to store host/user/password/node/vmid in `quick_connect_config.ini`) and «Σύνδεση» (authenticates with stored creds, calls `get_vnc_proxy(node, vmid)`, opens the existing `VNCWindow` with noVNC). Reuses `proxmox_api.py` and `vnc_window.py` unchanged. Distinct icon (`quick.ico`, lightning-bolt-inside-monitor) generated via `quick_icon.py`. Built to `dist/ProxmoxQuickConnect.exe` (221,160,328 bytes) via `quick_connect.spec`.
+
+**Files Modified:**
+- `quick_config.py` — new. `QuickConfig` reads/writes `quick_connect_config.ini` (host, user, base64 password, node, vmid).
+- `quick_settings_dialog.py` — new. `SettingsDialog(QDialog)` with Greek labels (Διακομιστής/Χρήστης/Κωδικός/Κόμβος/VM ID), styled to match the teal theme.
+- `quick_main.py` — new. `QuickConnectWindow(QMainWindow)` + entry point. Gradient paint, summary label, two buttons, launches `VNCWindow` on connect.
+- `quick_icon.py` — new. Generates `quick.ico` (lightning bolt inside a monitor outline, teal/cyan palette).
+- `quick.ico` — generated.
+- `quick_connect.spec` — new. PyInstaller spec → `dist/ProxmoxQuickConnect.exe`, windowed, icon `quick.ico`.
+
+**Verification:**
+- `python quick_icon.py` — quick.ico created.
+- `python -m py_compile quick_config.py quick_settings_dialog.py quick_main.py quick_icon.py` — OK.
+- `pyinstaller quick_connect.spec --noconfirm` — Build complete (221 MB exe).
+- `dist/ProxmoxQuickConnect.exe` — 221,160,328 bytes, dated 2026-08-04 12:11.
+
+**Status:** ✅ DONE — 2026-08-04
 
 ### Session 2026-07-28 — Server Discovery Dialog
 
